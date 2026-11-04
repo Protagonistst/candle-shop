@@ -1,159 +1,121 @@
-import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import CartButton from './CartButton';
-import CartDrawer from './CartDrawer';
+import { useEffect, useState } from 'react';
+import { Link, NavLink, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { Menu, ShoppingBag, X } from 'lucide-react';
+import { useCart } from '../contexts/CartContext';
+import DemoBanner from './DemoBanner';
+import { LogoMark } from './Icons';
+
+const navLinks = [
+  { name: 'Shop', path: '/shop' },
+  { name: 'Scents', path: '/scents' },
+  { name: 'Our Story', path: '/about' },
+  { name: 'Contact', path: '/contact' },
+  { name: 'Track Order', path: '/track' },
+];
 
 const Navbar = () => {
   const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const { itemCount, openCart } = useCart();
   const location = useLocation();
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 50) {
-        setIsScrolled(true);
-      } else {
-        setIsScrolled(false);
-      }
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+    const onScroll = () => setIsScrolled(window.scrollY > 24);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  // Close mobile menu and cart when path changes
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-    setIsCartOpen(false);
-    
-    // Force scroll to top when navigating through navbar
-    window.scrollTo(0, 0);
-  }, [location.pathname]);
+  useEffect(() => setMenuOpen(false), [location.pathname]);
 
-  const navLinks = [
-    { name: 'Home', path: '/' },
-    { name: 'Shop', path: '/shop' },
-    { name: 'Scents', path: '/scents' },
-    { name: 'About', path: '/about' },
-    { name: 'Contact', path: '/contact' },
-  ];
-
-  const isActive = (path: string) => {
-    return location.pathname === path;
-  };
-
-  // Click handler for nav links to ensure scroll reset
-  const handleNavClick = () => {
-    window.scrollTo(0, 0);
-  };
+  const linkClass = ({ isActive }: { isActive: boolean }) =>
+    `relative py-1 text-sm transition-colors ${
+      isActive ? 'text-espresso after:absolute after:inset-x-0 after:-bottom-0.5 after:h-px after:bg-ember' : 'text-bark/80 hover:text-espresso'
+    }`;
 
   return (
-    <>
-      <motion.nav
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className={`fixed w-full z-50 transition-all duration-300 ${
-          isScrolled ? 'bg-cream/95 backdrop-blur-sm shadow-sm py-3' : 'bg-transparent py-5'
+    <header className="sticky top-0 z-40">
+      <DemoBanner />
+      <nav
+        className={`border-b transition-all duration-300 ${
+          isScrolled || menuOpen ? 'border-sand/70 bg-cream/90 backdrop-blur-md' : 'border-transparent bg-cream'
         }`}
+        aria-label="Main"
       >
-        <div className="container-custom flex justify-between items-center">
-          <Link to="/" className="text-2xl font-playfair font-semibold text-cinnamon" onClick={handleNavClick}>
-            Amber & Glow
+        <div className="container-custom flex h-16 items-center justify-between">
+          <Link to="/" className="flex items-center gap-2 text-espresso" aria-label="Amber and Glow home">
+            <LogoMark />
+            <span className="font-display text-xl font-medium tracking-tight">Amber &amp; Glow</span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center">
-            <div className="flex space-x-8 mr-6">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  to={link.path}
-                  className={`transition-colors duration-300 ${
-                    isActive(link.path)
-                      ? 'text-amber-900 font-medium'
-                      : 'text-amber-800 hover:text-amber-600'
-                  }`}
-                  onClick={handleNavClick}
-                >
-                  {link.name}
-                </Link>
-              ))}
-            </div>
-            
-            <CartButton onClick={() => setIsCartOpen(true)} />
+          <div className="hidden items-center gap-8 md:flex">
+            {navLinks.map((link) => (
+              <NavLink key={link.path} to={link.path} className={linkClass}>
+                {link.name}
+              </NavLink>
+            ))}
           </div>
 
-          {/* Mobile Controls */}
-          <div className="flex items-center md:hidden">
-            <CartButton onClick={() => setIsCartOpen(true)} />
-            
+          <div className="flex items-center gap-1">
             <button
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="ml-2 text-amber-800 focus:outline-none"
+              type="button"
+              onClick={openCart}
+              className="relative rounded-full p-2.5 text-espresso transition-colors hover:bg-espresso/5"
+              aria-label={`Open bag, ${itemCount} ${itemCount === 1 ? 'item' : 'items'}`}
             >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="h-6 w-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                {isMobileMenuOpen ? (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                ) : (
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M4 6h16M4 12h16M4 18h16"
-                  />
-                )}
-              </svg>
+              <ShoppingBag className="h-5 w-5" strokeWidth={1.7} />
+              {itemCount > 0 && (
+                <motion.span
+                  key={itemCount}
+                  initial={{ scale: 0.6 }}
+                  animate={{ scale: 1 }}
+                  className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-ember px-1 text-[11px] font-semibold text-cream"
+                >
+                  {itemCount > 99 ? '99+' : itemCount}
+                </motion.span>
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMenuOpen((o) => !o)}
+              className="rounded-full p-2.5 text-espresso hover:bg-espresso/5 md:hidden"
+              aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={menuOpen}
+            >
+              {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>
           </div>
         </div>
 
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="md:hidden bg-cream/95 backdrop-blur-sm"
-          >
-            <div className="container-custom py-4 flex flex-col space-y-4">
-              {navLinks.map((link) => (
-                <Link
-                  key={link.name}
-                  to={link.path}
-                  className={`transition-colors duration-300 ${
-                    isActive(link.path)
-                      ? 'text-amber-900 font-medium'
-                      : 'text-amber-800 hover:text-amber-600'
-                  }`}
-                  onClick={handleNavClick}
-                >
-                  {link.name}
-                </Link>
-              ))}
-            </div>
-          </motion.div>
-        )}
-      </motion.nav>
-      
-      {/* Cart Drawer */}
-      <CartDrawer isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-    </>
+        <AnimatePresence>
+          {menuOpen && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.25 }}
+              className="overflow-hidden md:hidden"
+            >
+              <div className="container-custom flex flex-col gap-1 pb-5">
+                {navLinks.map((link) => (
+                  <NavLink
+                    key={link.path}
+                    to={link.path}
+                    className={({ isActive }) =>
+                      `rounded-xl px-3 py-3 font-display text-lg ${isActive ? 'bg-parchment text-espresso' : 'text-bark'}`
+                    }
+                  >
+                    {link.name}
+                  </NavLink>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </nav>
+    </header>
   );
 };
 
-export default Navbar; 
+export default Navbar;

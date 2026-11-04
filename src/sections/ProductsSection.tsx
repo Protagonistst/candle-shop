@@ -1,50 +1,37 @@
-import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import ProductCard from '../components/ProductCard';
-import { products } from '../data/productData';
+import { ArrowRight } from 'lucide-react';
+import ProductCard, { ProductCardSkeleton } from '../components/ProductCard';
+import { useProducts } from '../contexts/ProductsContext';
 
 const ProductsSection = () => {
-  // Get featured products for homepage display (limit to 4)
-  const featuredProducts = products
-    .filter(product => product.isFeatured)
-    .slice(0, 4);
+  const { products, loading, error } = useProducts();
+  const featured = products.filter((p) => p.isFeatured).slice(0, 4);
 
   return (
-    <section id="products" className="section bg-cream">
+    <section className="section bg-parchment/60">
       <div className="container-custom">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          viewport={{ once: true }}
-          className="text-center mb-12"
-        >
-          <h2 className="text-3xl md:text-4xl font-playfair font-semibold mb-4">Our Handcrafted Collection</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Each candle is carefully crafted with premium natural ingredients and essential oils to create the perfect ambiance for your space.
-          </p>
-        </motion.div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-          {featuredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
+        <div className="mb-10 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
+          <div>
+            <p className="eyebrow mb-3">Most loved</p>
+            <h2 className="text-4xl font-light md:text-5xl">The house favourites</h2>
+          </div>
+          <Link to="/shop" className="group inline-flex items-center gap-2 text-sm font-medium text-espresso">
+            View all candles <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          viewport={{ once: true }}
-          className="text-center mt-12"
-        >
-          <Link to="/shop" className="btn btn-outline inline-block">
-            View All Products
-          </Link>
-        </motion.div>
+        {error ? (
+          <p className="rounded-2xl bg-white/70 p-6 text-center text-bark">{error}</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-x-4 gap-y-10 md:gap-x-6 lg:grid-cols-4">
+            {loading
+              ? Array.from({ length: 4 }, (_, i) => <ProductCardSkeleton key={i} />)
+              : featured.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
+          </div>
+        )}
       </div>
     </section>
   );
 };
 
-export default ProductsSection; 
+export default ProductsSection;

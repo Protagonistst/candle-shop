@@ -2,18 +2,20 @@ import HeroSection from '../sections/HeroSection';
 import ProductsSection from '../sections/ProductsSection';
 import ScentsSection from '../sections/ScentsSection';
 import AboutSection from '../sections/AboutSection';
-import ContactSection from '../sections/ContactSection';
+import TestimonialsSection from '../sections/TestimonialsSection';
+import { useDocumentTitle } from '../lib/useDocumentTitle';
 
 const HomePage = () => {
+  useDocumentTitle();
   return (
     <>
       <HeroSection />
       <ProductsSection />
       <ScentsSection />
       <AboutSection />
-      <ContactSection />
+      <TestimonialsSection />
     </>
   );
 };
 
-export default HomePage; 
+export default HomePage;

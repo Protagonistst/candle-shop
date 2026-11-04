@@ -1,99 +1,85 @@
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Plus } from 'lucide-react';
+import type { Product } from '../../shared/types';
+import { familyName } from '../../shared/catalog';
+import { formatMoney } from '../../shared/pricing';
 import { useCart } from '../contexts/CartContext';
-import ImageWithFallback from './ImageWithFallback';
+import { Rating } from './ui';
 
-export interface Product {
-  id: number;
-  name: string;
-  description: string;
-  price: number;
-  image: string;
-  category: string;
-  rating: number;
-  stock: number;
-  isNew: boolean;
-  isFeatured: boolean;
-}
-
-interface ProductCardProps {
-  product: Product;
-}
-
-const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
-  // Ensure rating is a valid number or default to 0
-  const rating = typeof product.rating === 'number' ? product.rating : 0;
+const ProductCard = ({ product, index = 0 }: { product: Product; index?: number }) => {
   const { addToCart } = useCart();
-  
-  const handleAddToCart = () => {
-    addToCart(product);
-  };
-  
+  const soldOut = product.stock === 0;
+
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
+    <motion.article
+      initial={{ opacity: 0, y: 16 }}
       whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-      viewport={{ once: true, margin: '-50px' }}
-      className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-lg transition-shadow duration-300 relative"
+      viewport={{ once: true, margin: '-40px' }}
+      transition={{ duration: 0.45, delay: (index % 4) * 0.06 }}
+      className="group flex flex-col"
     >
-      <div className="h-64 bg-white overflow-hidden relative flex items-center justify-center p-4">
-        <div className="relative w-full h-full flex items-center justify-center">
-          <ImageWithFallback
-            src={product.image}
-            alt={product.name}
-            className="max-w-full max-h-full object-contain"
-          />
+      <Link
+        to={`/shop/${product.slug}`}
+        className="relative block aspect-[3/4] overflow-hidden rounded-2xl bg-[#2b1e15]"
+        aria-label={`${product.name}, ${formatMoney(product.price)}`}
+      >
+        <img
+          src={product.image}
+          alt=""
+          loading="lazy"
+          className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+        />
+        <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
+          {product.isNew && <span className="rounded-full bg-cream px-2.5 py-1 text-[11px] font-semibold text-espresso">New</span>}
+          {soldOut ? (
+            <span className="rounded-full bg-espresso px-2.5 py-1 text-[11px] font-semibold text-cream">Sold out</span>
+          ) : (
+            product.stock < 10 && (
+              <span className="rounded-full bg-ember px-2.5 py-1 text-[11px] font-semibold text-cream">Only {product.stock} left</span>
+            )
+          )}
         </div>
-        <div className="w-full h-full absolute inset-0 bg-black/5 hover:bg-black/0 transition-all duration-300"></div>
-        {product.isNew && (
-          <div className="absolute top-3 left-3 bg-amber-600 text-white px-2 py-1 text-xs rounded-md z-10">
-            New
+      </Link>
+
+      <div className="flex flex-1 flex-col pt-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-smoke">{familyName(product.family)}</p>
+            <h3 className="mt-1 text-xl font-normal leading-snug">
+              <Link to={`/shop/${product.slug}`} className="hover:text-ember">
+                {product.name}
+              </Link>
+            </h3>
           </div>
-        )}
-        {product.stock < 10 && (
-          <div className="absolute top-3 right-3 bg-red-500 text-white px-2 py-1 text-xs rounded-md z-10">
-            Limited Stock
-          </div>
-        )}
-      </div>
-      
-      <div className="p-6">
-        <h3 className="text-xl font-playfair font-medium mb-2">{product.name}</h3>
-        <div className="inline-block px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-xs mb-3">
-          {product.category}
+          <p className="shrink-0 pt-4 font-medium tabular-nums">{formatMoney(product.price)}</p>
         </div>
-        <p className="text-gray-600 text-sm mb-4">{product.description}</p>
-        
-        <div className="flex items-center mb-4">
-          <div className="flex text-amber-400">
-            {[...Array(5)].map((_, i) => (
-              <svg 
-                key={i} 
-                xmlns="http://www.w3.org/2000/svg" 
-                className={`h-4 w-4 ${i < Math.floor(rating) ? 'fill-current' : 'stroke-current fill-none'}`}
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z" />
-              </svg>
-            ))}
-            <span className="ml-1 text-xs text-gray-500">({rating.toFixed(1)})</span>
-          </div>
-        </div>
-        
-        <div className="flex justify-between items-center">
-          <span className="text-lg font-medium text-amber-800">${product.price.toFixed(2)}</span>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="bg-amber-700 hover:bg-amber-800 text-white py-2 px-4 rounded-lg transition-colors duration-300"
-            onClick={handleAddToCart}
+        <p className="mt-1.5 line-clamp-2 text-sm text-bark/75">{product.tagline}</p>
+        <div className="mt-auto flex items-center justify-between pt-4">
+          <Rating value={product.rating} count={product.reviewCount} />
+          <button
+            type="button"
+            onClick={() => addToCart(product)}
+            disabled={soldOut}
+            className="inline-flex items-center gap-1.5 rounded-full border border-espresso/20 px-3.5 py-2 text-xs font-medium text-espresso transition-colors hover:border-espresso hover:bg-espresso hover:text-cream disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent disabled:hover:text-espresso"
+            aria-label={`Add ${product.name} to bag`}
           >
-            Add to Cart
-          </motion.button>
+            <Plus className="h-3.5 w-3.5" />
+            Add
+          </button>
         </div>
       </div>
-    </motion.div>
+    </motion.article>
   );
 };
 
-export default ProductCard; 
+export const ProductCardSkeleton = () => (
+  <div className="animate-pulse">
+    <div className="aspect-[3/4] rounded-2xl bg-sand/60" />
+    <div className="mt-4 h-3 w-16 rounded bg-sand/60" />
+    <div className="mt-2 h-5 w-3/4 rounded bg-sand/60" />
+    <div className="mt-2 h-3 w-full rounded bg-sand/50" />
+  </div>
+);
+
+export default ProductCard;

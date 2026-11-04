@@ -1,234 +1,138 @@
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import ImageWithFallback from '../components/ImageWithFallback';
+import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { CheckCircle2, Clock, Mail, MapPin, Phone } from 'lucide-react';
+import { PageHeader, Spinner } from '../components/ui';
+import { ApiRequestError, api, errorMessage } from '../lib/api';
+import { useDocumentTitle } from '../lib/useDocumentTitle';
+
+const empty = { name: '', email: '', subject: '', message: '' };
+
+const details = [
+  { Icon: MapPin, title: 'Workshop', lines: ['123 Candle Lane', 'Portland, OR 97205'] },
+  { Icon: Mail, title: 'Email', lines: ['hello@amberandglow.example'] },
+  { Icon: Phone, title: 'Phone', lines: ['(555) 123-4567'] },
+  { Icon: Clock, title: 'Opening hours', lines: ['Monday to Friday, 10am to 6pm', 'Saturday, 10am to 4pm'] },
+];
 
 const ContactPage = () => {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: '',
-  });
-  
-  const [formStatus, setFormStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
+  useDocumentTitle('Contact');
+  const [form, setForm] = useState(empty);
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent'>('idle');
+  const [formError, setFormError] = useState<string | null>(null);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+  const onChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
+    setErrors((er) => ({ ...er, [e.target.name]: '' }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
-    setFormStatus('submitting');
-    
-    // Simulate form submission
-    setTimeout(() => {
-      setFormStatus('success');
-      setFormData({
-        name: '',
-        email: '',
-        subject: '',
-        message: ''
-      });
-    }, 1500);
+    setStatus('sending');
+    setFormError(null);
+    try {
+      await api('/contact', { body: form });
+      setStatus('sent');
+      setForm(empty);
+    } catch (err) {
+      setStatus('idle');
+      if (err instanceof ApiRequestError && err.data.fields) setErrors(err.data.fields);
+      setFormError(errorMessage(err));
+    }
   };
+
+  const fieldClass = (name: string) => `field ${errors[name] ? 'field-error' : ''}`;
+  const FieldError = ({ name }: { name: string }) =>
+    errors[name] ? <p className="mt-1 text-xs text-red-700">{errors[name]}</p> : null;
 
   return (
-    <div className="pt-24 pb-16 bg-cream min-h-screen">
-      <div className="container-custom">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-center mb-12"
-        >
-          <h1 className="text-4xl font-playfair font-bold text-cinnamon mb-4">Contact Us</h1>
-          <p className="text-amber-800 max-w-2xl mx-auto">
-            We'd love to hear from you! Whether you have a question about our products, 
-            custom orders, or anything else, our team is here to help.
-          </p>
-        </motion.div>
+    <div className="container-custom pb-24">
+      <PageHeader eyebrow="Contact" title="We would love to hear from you">
+        Questions about an order, a scent, wholesale or a custom batch for your event. We reply within one working day.
+      </PageHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-          {/* Contact Form */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7 }}
-            className="bg-white p-8 rounded-xl shadow-md"
-          >
-            <h2 className="text-2xl font-playfair font-bold text-cinnamon mb-6">Send Us a Message</h2>
-            
-            {formStatus === 'success' ? (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="bg-green-50 border border-green-200 text-green-800 rounded-lg p-4 mb-6"
-              >
-                <p className="font-medium">Thank you for your message!</p>
-                <p className="text-sm mt-1">We'll get back to you as soon as possible.</p>
-              </motion.div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid gap-8 lg:grid-cols-5">
+        <div className="card p-6 sm:p-10 lg:col-span-3">
+          {status === 'sent' ? (
+            <div className="flex flex-col items-center py-12 text-center" role="status">
+              <CheckCircle2 className="h-12 w-12 text-moss" strokeWidth={1.5} />
+              <h2 className="mt-4 text-3xl font-light">Message received</h2>
+              <p className="mt-2 max-w-sm text-bark/80">Thank you for writing. Someone from the workshop will reply within one working day.</p>
+              <button onClick={() => setStatus('idle')} className="btn-outline mt-6">
+                Send another message
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={submit} noValidate className="space-y-5">
+              <h2 className="text-3xl font-light">Send a message</h2>
+              <div className="grid gap-5 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="name" className="block text-amber-800 mb-1">Your Name</label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-300 focus:outline-none"
-                    placeholder="John Doe"
-                  />
+                  <label htmlFor="name" className="field-label">Name</label>
+                  <input id="name" name="name" value={form.name} onChange={onChange} className={fieldClass('name')} autoComplete="name" />
+                  <FieldError name="name" />
                 </div>
-                
                 <div>
-                  <label htmlFor="email" className="block text-amber-800 mb-1">Email Address</label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-300 focus:outline-none"
-                    placeholder="john@example.com"
-                  />
-                </div>
-                
-                <div>
-                  <label htmlFor="subject" className="block text-amber-800 mb-1">Subject</label>
-                  <select
-                    id="subject"
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleChange}
-                    required
-                    className="w-full px-4 py-2 border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-300 focus:outline-none"
-                  >
-                    <option value="">Please select</option>
-                    <option value="order">Order Inquiry</option>
-                    <option value="product">Product Question</option>
-                    <option value="wholesale">Wholesale Information</option>
-                    <option value="custom">Custom Order</option>
-                    <option value="other">Other</option>
-                  </select>
-                </div>
-                
-                <div>
-                  <label htmlFor="message" className="block text-amber-800 mb-1">Your Message</label>
-                  <textarea
-                    id="message"
-                    name="message"
-                    value={formData.message}
-                    onChange={handleChange}
-                    required
-                    rows={5}
-                    className="w-full px-4 py-2 border border-amber-200 rounded-lg focus:ring-2 focus:ring-amber-300 focus:outline-none"
-                    placeholder="How can we help you?"
-                  ></textarea>
-                </div>
-                
-                <button
-                  type="submit"
-                  disabled={formStatus === 'submitting'}
-                  className={`px-6 py-3 bg-amber-700 text-white rounded-lg font-medium transition-colors ${
-                    formStatus === 'submitting' ? 'opacity-70 cursor-not-allowed' : 'hover:bg-amber-800'
-                  }`}
-                >
-                  {formStatus === 'submitting' ? 'Sending...' : 'Send Message'}
-                </button>
-              </form>
-            )}
-          </motion.div>
-          
-          {/* Contact Information */}
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7 }}
-          >
-            <div className="bg-white p-8 rounded-xl shadow-md mb-8">
-              <h2 className="text-2xl font-playfair font-bold text-cinnamon mb-6">Contact Information</h2>
-              
-              <div className="space-y-4">
-                <div className="flex items-start">
-                  <div className="text-amber-700 mr-3 mt-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-amber-800">Visit Our Shop</h3>
-                    <p className="text-gray-700">123 Candle Lane<br />Portland, OR 97205</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start">
-                  <div className="text-amber-700 mr-3 mt-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-amber-800">Email Us</h3>
-                    <p className="text-gray-700">info@amberandglow.com</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start">
-                  <div className="text-amber-700 mr-3 mt-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-amber-800">Call Us</h3>
-                    <p className="text-gray-700">(555) 123-4567</p>
-                  </div>
-                </div>
-                
-                <div className="flex items-start">
-                  <div className="text-amber-700 mr-3 mt-1">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h3 className="font-medium text-amber-800">Business Hours</h3>
-                    <p className="text-gray-700">
-                      Monday - Friday: 10am - 6pm<br />
-                      Saturday: 10am - 4pm<br />
-                      Sunday: Closed
-                    </p>
-                  </div>
+                  <label htmlFor="email" className="field-label">Email</label>
+                  <input id="email" name="email" type="email" value={form.email} onChange={onChange} className={fieldClass('email')} autoComplete="email" />
+                  <FieldError name="email" />
                 </div>
               </div>
-            </div>
-            
-            {/* Map */}
-            <div className="bg-white p-4 rounded-xl shadow-md overflow-hidden h-64">
-              <div className="relative h-full rounded-lg overflow-hidden">
-                <ImageWithFallback
-                  src="/images/map.jpg"
-                  alt="Store location map"
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-amber-700 text-white px-4 py-2 rounded-lg shadow-lg">
-                    Interactive map placeholder
-                  </div>
+              <div>
+                <label htmlFor="subject" className="field-label">Subject</label>
+                <select id="subject" name="subject" value={form.subject} onChange={onChange} className={fieldClass('subject')}>
+                  <option value="">Choose a topic</option>
+                  <option value="order">Order question</option>
+                  <option value="product">Product question</option>
+                  <option value="wholesale">Wholesale</option>
+                  <option value="custom">Custom order</option>
+                  <option value="other">Something else</option>
+                </select>
+                <FieldError name="subject" />
+              </div>
+              <div>
+                <label htmlFor="message" className="field-label">Message</label>
+                <textarea id="message" name="message" rows={6} value={form.message} onChange={onChange} className={fieldClass('message')} />
+                <FieldError name="message" />
+              </div>
+              {formError && <p className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-800" role="alert">{formError}</p>}
+              <button type="submit" disabled={status === 'sending'} className="btn-primary px-8 py-3.5">
+                {status === 'sending' ? (
+                  <>
+                    <Spinner className="h-4 w-4" /> Sending
+                  </>
+                ) : (
+                  'Send message'
+                )}
+              </button>
+            </form>
+          )}
+        </div>
+
+        <div className="space-y-6 lg:col-span-2">
+          <div className="card divide-y divide-sand/70 px-6 sm:px-8">
+            {details.map(({ Icon, title, lines }) => (
+              <div key={title} className="flex gap-4 py-5">
+                <Icon className="mt-0.5 h-5 w-5 shrink-0 text-ember" strokeWidth={1.6} />
+                <div>
+                  <p className="font-medium">{title}</p>
+                  {lines.map((l) => (
+                    <p key={l} className="text-sm text-bark/80">{l}</p>
+                  ))}
                 </div>
               </div>
-            </div>
-          </motion.div>
+            ))}
+          </div>
+          <div className="overflow-hidden rounded-2xl border border-sand/70 shadow-soft">
+            <iframe
+              title="Map showing the workshop area in Portland, Oregon"
+              src="https://www.openstreetmap.org/export/embed.html?bbox=-122.70%2C45.505%2C-122.66%2C45.53&layer=mapnik"
+              className="h-64 w-full grayscale-[40%] sepia-[20%]"
+              loading="lazy"
+            />
+          </div>
         </div>
       </div>
     </div>
   );
 };
 
-export default ContactPage; 
+export default ContactPage;
