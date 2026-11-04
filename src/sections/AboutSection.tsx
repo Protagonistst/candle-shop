@@ -1,76 +1,61 @@
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Droplets, Flame, HandHeart, Recycle } from 'lucide-react';
 
-const AboutSection = () => {
-  return (
-    <section id="about" className="section bg-amber-50">
-      <div className="container-custom">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7 }}
-            viewport={{ once: true }}
-            className="relative"
-          >
-            <div className="aspect-square overflow-hidden rounded-lg">
-              <img
-                src="/images/about1.png"
-                alt="Handcrafting candles"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="absolute -bottom-6 -right-6 bg-white p-6 rounded-lg shadow-lg w-48 hidden md:block">
-              <p className="text-sm text-gray-600 italic">
-                "Crafting moments of serenity, one candle at a time."
-              </p>
-            </div>
-          </motion.div>
+const pillars = [
+  { Icon: HandHeart, title: 'Hand-poured', text: 'Every jar is poured, wicked and labelled by hand in batches of 48.' },
+  { Icon: Droplets, title: 'Clean ingredients', text: 'Natural soy wax and phthalate-free fragrance oils. Nothing else.' },
+  { Icon: Flame, title: 'Even, quiet burn', text: 'Cotton wicks tested for a steady flame and a full melt pool.' },
+  { Icon: Recycle, title: 'Made to be reused', text: 'Reusable glass jars and plastic-free, recyclable packaging.' },
+];
 
-          <motion.div
-            initial={{ opacity: 0, x: 30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.7 }}
-            viewport={{ once: true }}
-          >
-            <h2 className="text-3xl md:text-4xl font-playfair font-semibold mb-6">Our Story</h2>
-            <p className="text-gray-700 mb-6">
-              Founded in 2018, Amber & Glow began as a small home workshop with a mission to create candles that not only illuminated spaces but transformed them into sanctuaries of peace and comfort.
-            </p>
-            <p className="text-gray-700 mb-6">
-              Each of our candles is hand-poured in small batches using premium soy wax, cotton wicks, and thoughtfully curated scent blends made from essential oils and fine fragrances.
-            </p>
-
-            <div className="grid grid-cols-2 gap-4 mt-8">
-              <div className="bg-white p-4 rounded-lg shadow-sm">
-                <h3 className="text-lg font-playfair font-medium mb-2 text-amber-700">Handmade</h3>
-                <p className="text-sm text-gray-600">
-                  Crafted with care in small batches for the highest quality.
-                </p>
-              </div>
-              <div className="bg-white p-4 rounded-lg shadow-sm">
-                <h3 className="text-lg font-playfair font-medium mb-2 text-amber-700">Eco-friendly</h3>
-                <p className="text-sm text-gray-600">
-                  Sustainable materials and recyclable packaging.
-                </p>
-              </div>
-              <div className="bg-white p-4 rounded-lg shadow-sm">
-                <h3 className="text-lg font-playfair font-medium mb-2 text-amber-700">Natural</h3>
-                <p className="text-sm text-gray-600">
-                  Premium soy wax and pure essential oils.
-                </p>
-              </div>
-              <div className="bg-white p-4 rounded-lg shadow-sm">
-                <h3 className="text-lg font-playfair font-medium mb-2 text-amber-700">Slow-made</h3>
-                <p className="text-sm text-gray-600">
-                  Thoughtfully created with attention to detail.
-                </p>
-              </div>
-            </div>
-          </motion.div>
+const AboutSection = () => (
+  <section className="section bg-espresso text-cream">
+    <div className="container-custom grid items-center gap-12 lg:grid-cols-2 lg:gap-20">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6 }}
+        className="relative"
+      >
+        <div className="grid grid-cols-2 gap-4">
+          <img src="/images/woody.jpg" alt="A lit amber candle beside pine cones" className="aspect-[3/4] w-full rounded-2xl object-cover" loading="lazy" />
+          <img src="/images/floral.jpg" alt="A candle surrounded by roses and cherry blossom" className="mt-12 aspect-[3/4] w-full rounded-2xl object-cover" loading="lazy" />
         </div>
-      </div>
-    </section>
-  );
-};
+        <blockquote className="absolute -bottom-6 left-1/2 w-[85%] -translate-x-1/2 rounded-2xl bg-cream p-5 text-center font-display text-lg italic text-espresso shadow-lift">
+          "Crafting moments of calm, one candle at a time."
+        </blockquote>
+      </motion.div>
 
-export default AboutSection; 
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, delay: 0.1 }}
+        className="pt-8 lg:pt-0"
+      >
+        <p className="eyebrow mb-4 text-honey">Our story</p>
+        <h2 className="text-balance text-4xl font-light text-cream md:text-5xl">From a kitchen stove to a small workshop</h2>
+        <p className="mt-6 leading-relaxed text-cream/70">
+          Amber &amp; Glow started in 2018 with a double boiler, a box of jars and a stubborn idea: a candle should make a room
+          feel calmer, not louder. Today a small team pours every candle by hand, but the method has not changed.
+        </p>
+        <div className="mt-10 grid gap-x-8 gap-y-7 sm:grid-cols-2">
+          {pillars.map(({ Icon, title, text }) => (
+            <div key={title}>
+              <Icon className="h-5 w-5 text-honey" strokeWidth={1.6} />
+              <h3 className="mt-3 font-sans text-sm font-semibold text-cream">{title}</h3>
+              <p className="mt-1 text-sm leading-relaxed text-cream/60">{text}</p>
+            </div>
+          ))}
+        </div>
+        <Link to="/about" className="btn mt-10 border border-cream/25 text-cream hover:bg-cream hover:text-espresso">
+          Read the full story
+        </Link>
+      </motion.div>
+    </div>
+  </section>
+);
+
+export default AboutSection;
